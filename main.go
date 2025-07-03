@@ -5,93 +5,54 @@ import (
 	"fmt"
 	"os"
 	"strings"
-  "github.com/utkarshjagtap/pokedexcli/map"
+	"time"
 
+	"github.com/utkarshjagtap/pokedexcli/internal/pokeapi"
+	"github.com/utkarshjagtap/pokedexcli/internal/pokecache"
 )
 
-var cute = map[string]cliCommand{}
+func main() {
 
-func main(){
+	configuration := config{
+		storage: pokecache.NewCache(time.Second * 5),
+    pokedex: map[string]pokeapi.PokeDetails{},
+	}
 
-cute["exit"] = cliCommand{
-    name: "exit",
-    description: "Exit the Pokedex",
-    callback: commandExit,
+	startREPL(&configuration)
 }
 
-cute["help"]=cliCommand{
-    name: "help",
-    description: "Displays a help message",
-    callback: commandHelp,
-}
-
-cute["map"]=cliCommand{
-    name: "map",
-    description: "Gives you a list of 20 locations to explore",
-    callback: maps.CommandMap,
-}
-
-cute["explore"]=cliCommand{
-    name: "explore",
-    description: "Explores the given city ",
-    callback: commandHelp,
-}
-
-  scn := bufio.NewScanner(os.Stdin)
-  for {
-    fmt.Print("Pokedex >")
-    if scn.Scan(){
-      clean, err := cleanInput(scn.Text())
-      if err != nil{
-        fmt.Println(err)
+func startREPL(c *config) {
+	scn := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Print("Pokedex >")
+		if scn.Scan() {
+      text := scn.Text()
+			clean, err := cleanInput(text)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+      value, ok := commands[clean[0]]
+      if !ok {
+        fmt.Println("invalid command '", clean[0], "' try 'help' to see usage")
         continue
       }
-      cute[clean].callback()
+      var arg string
+      if len(clean) > 1{
+      value.callback(c, clean[1])
+			continue
+      }
+      value.callback(c, arg)
       continue
-    }
+		}
+	}
+}
+
+func cleanInput(text string) ([]string, error) {
+  
+	output := strings.Fields(strings.ToLower(text))
+  if len(output) > 2{
+    return nil, fmt.Errorf("invalid command '%v', use 'help' command to see usage", text)
   }
+ 	return output, nil
 }
-
-func commandMap() {
-}
-
-func cleanInput(text string) (string, error){
-  output := strings.ToLower(text)
-  switch output {
-  case "help":
-  case "exit":
-  case "map":
-  return output, nil
-
-  default:
-  return "", fmt.Errorf("Unknown Command %v", output)
-    
-  }
-  return output, nil
-}
-
-func commandExit() {
-  fmt.Printf("Closing the Pokedex... Goodbye!")
-  defer os.Exit(0)
-}
-
-func commandHelp() {
-  welcome := `Welcome to the Pokedex!
-Usage:
-
-`
-  fmt.Println(welcome)
-  for _, command := range cute{
-    fmt.Println(command.name,": ",command.description)
-  }
-
-}
-
-
-type cliCommand struct{
-  name string
-  description string
-  callback func()
-}
-
-

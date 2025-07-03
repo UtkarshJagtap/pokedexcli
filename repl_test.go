@@ -11,17 +11,21 @@ func TestFirstInput(t *testing.T){
     expected  string
   }{
     {
-      input : "CHARMANDER is better than bulbasaur",
-      expected : "charmander",
+      input : "CHARMANDER",
+      expected : "",
     },
     {
-      input : "Pickachu is kinda mean to ash",
-      expected: "pickachu",
+      input : "Pickachu",
+      expected: "",
+    },
+    {
+      input: "Map",
+      expected:"map",
     },
   }
 
   for _, ca := range cases {
-    actual := cleanInput(ca.input)
+    actual, _ := cleanInput(ca.input)
     expectedWord := ca.expected
 
     if actual != expectedWord {
